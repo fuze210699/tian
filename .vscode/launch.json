@@ -276,7 +276,7 @@
 				"--disable-features=CalculateNativeWinOcclusion",
 				"--disable-extension=vscode.vscode-api-tests"
 			],
-			"userDataDir": "${userHome}/.vscode-oss-dev",
+			"userDataDir": "${userHome}/.tian-dev",
 			"webRoot": "${workspaceFolder}",
 			"cascadeTerminateToConfigurations": [
 				"Attach to Extension Host"
@@ -321,7 +321,7 @@
 				"--disable-extension=vscode.vscode-api-tests",
 				"--agents"
 			],
-			"userDataDir": "${userHome}/.vscode-oss-agents-dev",
+			"userDataDir": "${userHome}/.tian-agents-dev",
 			"webRoot": "${workspaceFolder}",
 			"cascadeTerminateToConfigurations": [
 				"Attach to Extension Host"
@@ -369,7 +369,7 @@
 				"--disable-features=CalculateNativeWinOcclusion",
 				"--disable-extension=vscode.vscode-api-tests"
 			],
-			"userDataDir": "${userHome}/.vscode-oss-dev",
+			"userDataDir": "${userHome}/.tian-dev",
 			"webRoot": "${workspaceFolder}",
 			"cascadeTerminateToConfigurations": [
 				"Attach to Extension Host"
@@ -577,12 +577,12 @@
 			"request": "launch",
 			"name": "Run Unit Tests",
 			"program": "${workspaceFolder}/test/unit/electron/index.js",
-			"runtimeExecutable": "${workspaceFolder}/.build/electron/Code - OSS.app/Contents/MacOS/Code - OSS",
+			"runtimeExecutable": "${workspaceFolder}/.build/electron/Tian.app/Contents/MacOS/Tian",
 			"windows": {
-				"runtimeExecutable": "${workspaceFolder}/.build/electron/Code - OSS.exe"
+				"runtimeExecutable": "${workspaceFolder}/.build/electron/Tian.exe"
 			},
 			"linux": {
-				"runtimeExecutable": "${workspaceFolder}/.build/electron/code-oss"
+				"runtimeExecutable": "${workspaceFolder}/.build/electron/tian"
 			},
 			"outputCapture": "std",
 			"args": [
@@ -607,12 +607,12 @@
 			"request": "launch",
 			"name": "Run Unit Tests For Current File",
 			"program": "${workspaceFolder}/test/unit/electron/index.js",
-			"runtimeExecutable": "${workspaceFolder}/.build/electron/Code - OSS.app/Contents/MacOS/Code - OSS",
+			"runtimeExecutable": "${workspaceFolder}/.build/electron/Tian.app/Contents/MacOS/Tian",
 			"windows": {
-				"runtimeExecutable": "${workspaceFolder}/.build/electron/Code - OSS.exe"
+				"runtimeExecutable": "${workspaceFolder}/.build/electron/Tian.exe"
 			},
 			"linux": {
-				"runtimeExecutable": "${workspaceFolder}/.build/electron/code-oss"
+				"runtimeExecutable": "${workspaceFolder}/.build/electron/tian"
 			},
 			"cascadeTerminateToConfigurations": [
 				"Attach to VS Code"
@@ -643,7 +643,7 @@
 			"timeout": 240000,
 			"args": [
 				"-l",
-				"${workspaceFolder}/.build/electron/Code - OSS.app/Contents/MacOS/Code - OSS"
+				"${workspaceFolder}/.build/electron/Tian.app/Contents/MacOS/Tian"
 			],
 			"outFiles": [
 				"${cwd}/out/**/*.js"

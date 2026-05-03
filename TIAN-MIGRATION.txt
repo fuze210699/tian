@@ -1,0 +1,17 @@
+Migrated from tian-ide (local) into this clone of https://github.com/fuze210699/tian
+Vision / chatbot narrative: see TIAN_AI_VISION.md
+
+Folders added:
+  extensions/tian-ai     — Sidebar webview chat, providers, vscode tool runner; depends on ../../packages/ai-agent-core
+  packages/ai-agent-core  — Shared agent runtime (imports from ../../../packages in extension source)
+
+Clone path on this machine: D:\project\tian-fork (sibling of tian-ide).
+
+Build the extension locally:
+  cd packages/ai-agent-core
+  npm install
+  cd ../../extensions/tian-ai
+  npm install
+  npm run compile
+
+Build Code OSS per upstream (see CONTRIBUTING.md), e.g. npm install at repo root, then npm run watch / npm run gulp compile-extensions as appropriate.

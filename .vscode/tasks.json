@@ -265,8 +265,8 @@
 			},
 			"args": [
 				"--agents",
-				"--user-data-dir=${userHome}/.vscode-oss-sessions-dev",
-				"--extensions-dir=${userHome}/.vscode-oss-sessions-dev/extensions"
+				"--user-data-dir=${userHome}/.tian-sessions-dev",
+				"--extensions-dir=${userHome}/.tian-sessions-dev/extensions"
 			],
 			"problemMatcher": []
 		},
@@ -287,7 +287,7 @@
 			"problemMatcher": []
 		},
 		{
-			"label": "Run and Compile Code - OSS",
+			"label": "Run and Compile Tian",
 			"dependsOn": [
 				"Transpile Client",
 				"Run Dev"

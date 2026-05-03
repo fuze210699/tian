@@ -1,9 +1,9 @@
 {
-  "name": "code-oss-dev",
+  "name": "tian-dev",
   "version": "1.119.0",
   "distro": "03ddc71f37189e8ced0ef924fe9b9600c402b67f",
   "author": {
-    "name": "Microsoft Corporation"
+    "name": "Tian Fork"
   },
   "license": "MIT",
   "main": "./out/main.js",

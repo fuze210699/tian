@@ -1,4 +1,9 @@
 # Visual Studio Code - Open Source ("Code - OSS")
+
+**Fork Tian (fuze210699/tian)** mở rộng codebase này với assistant **AI Agent nhúng** (bundle `extensions/tian-ai` + `packages/ai-agent-core`): mô tả chatbot và **tầm nhìn** (hướng fork OSS + agent-first kiểu Cursor) nằm trong **[TIAN_AI_VISION.md](./TIAN_AI_VISION.md)**. Ghi chú copy từ môi trường phát triển: **[TIAN-MIGRATION.txt](./TIAN-MIGRATION.txt)**.
+
+---
+
 [![Feature Requests](https://img.shields.io/github/issues/microsoft/vscode/feature-request.svg)](https://github.com/microsoft/vscode/issues?q=is%3Aopen+is%3Aissue+label%3Afeature-request+sort%3Areactions-%2B1-desc)
 [![Bugs](https://img.shields.io/github/issues/microsoft/vscode/bug.svg)](https://github.com/microsoft/vscode/issues?utf8=✓&q=is%3Aissue+is%3Aopen+label%3Abug)
 [![Gitter](https://img.shields.io/badge/chat-on%20gitter-yellow.svg)](https://gitter.im/Microsoft/vscode)

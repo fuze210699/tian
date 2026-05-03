@@ -1,0 +1,131 @@
+{
+  "name": "tian-ai",
+  "displayName": "Tian AI",
+  "description": "Built-in Tian AI assistant / agent (works like editor chat surfaces; bundles with OSS). Not a Marketplace extension.",
+  "version": "0.1.0",
+  "publisher": "vscode",
+  "engines": {
+    "vscode": "^1.85.0"
+  },
+  "categories": ["Machine Learning", "Programming Languages"],
+  "activationEvents": ["onStartupFinished"],
+  "main": "./dist/extension.js",
+  "contributes": {
+    "viewsContainers": {
+      "activitybar": [
+        {
+          "id": "tian-ai",
+          "title": "Tian AI",
+          "icon": "media/tian-ai.svg"
+        }
+      ]
+    },
+    "views": {
+      "tian-ai": [
+        {
+          "type": "webview",
+          "id": "tian-ai.chat",
+          "name": "Chat",
+          "contextualTitle": "Tian AI"
+        }
+      ]
+    },
+    "configuration": {
+      "title": "Tian AI",
+      "properties": {
+        "tian-ai.provider": {
+          "type": "string",
+          "default": "openai",
+          "description": "Provider id (openai, anthropic, gemini, ollama, groq, openrouter)"
+        },
+        "tian-ai.model": {
+          "type": "string",
+          "default": "gpt-4o-mini"
+        },
+        "tian-ai.baseUrl": {
+          "type": "string",
+          "default": ""
+        },
+        "tian-ai.temperature": {
+          "type": "number",
+          "default": null
+        },
+        "tian-ai.maxTokens": {
+          "type": "number",
+          "default": null
+        },
+        "tian-ai.includeActiveEditor": {
+          "type": "boolean",
+          "default": true,
+          "description": "Attach active file path and contents to each request (when editor is a workspace file)."
+        }
+      }
+    },
+    "menus": {
+      "commandPalette": [
+        { "command": "tian-ai.openChat", "when": "true" },
+        { "command": "tian-ai.explainSelection", "when": "editorTextFocus" },
+        { "command": "tian-ai.clearChatSidebar", "when": "true" },
+        { "command": "tian-ai.setApiKey", "when": "true" },
+        { "command": "tian-ai.chatToOutput", "when": "true" }
+      ],
+      "editor/context": [
+        {
+          "command": "tian-ai.explainSelection",
+          "group": "navigation@900",
+          "when": "editorTextFocus"
+        }
+      ]
+    },
+    "keybindings": [
+      {
+        "command": "tian-ai.openChat",
+        "key": "ctrl+shift+i",
+        "mac": "cmd+shift+i",
+        "when": "!terminalFocus"
+      }
+    ],
+    "commands": [
+      {
+        "command": "tian-ai.openChat",
+        "title": "Tian AI: Open Chat Sidebar",
+        "category": "Tian AI"
+      },
+      {
+        "command": "tian-ai.setApiKey",
+        "title": "Tian AI: Set API Key",
+        "category": "Tian AI"
+      },
+      {
+        "command": "tian-ai.chatToOutput",
+        "title": "Tian AI: Chat (Output panel)",
+        "category": "Tian AI"
+      },
+      {
+        "command": "tian-ai.explainSelection",
+        "title": "Tian AI: Explain Selection",
+        "category": "Tian AI"
+      },
+      {
+        "command": "tian-ai.clearChatSidebar",
+        "title": "Tian AI: Clear Sidebar",
+        "category": "Tian AI"
+      }
+    ]
+  },
+  "scripts": {
+    "compile": "esbuild src/extension.ts --bundle --outfile=dist/extension.js --external:vscode --platform=node --format=cjs --sourcemap --packages=bundle",
+    "watch": "npm run compile -- --watch"
+  },
+  "dependencies": {
+    "@anthropic-ai/sdk": "^0.91.1",
+    "@google/generative-ai": "^0.24.1",
+    "openai": "^6.34.0"
+  },
+  "devDependencies": {
+    "@types/node": "^22.19.1",
+    "@types/vscode": "^1.85.0",
+    "esbuild": "^0.25.0",
+    "typescript": "^5.9.3"
+  }
+}

@@ -346,11 +346,11 @@ const policies: ExportedPolicyDataDto = {
 };
 
 const mockProduct: ProductJson = {
-	nameLong: 'Code - OSS',
-	darwinBundleIdentifier: 'com.visualstudio.code.oss',
-	darwinProfilePayloadUUID: 'CF808BE7-53F3-46C6-A7E2-7EDB98A5E959',
-	darwinProfileUUID: '47827DD9-4734-49A0-AF80-7E19B11495CC',
-	win32RegValueName: 'CodeOSS'
+	nameLong: 'Tian',
+	darwinBundleIdentifier: 'com.tianfork.tian',
+	darwinProfilePayloadUUID: '7B02CDEF-0345-42FA-A641-BCDEF0234567',
+	darwinProfileUUID: '6A91BCDE-F234-41E9-9530-ABCDEF123456',
+	win32RegValueName: 'Tian'
 };
 
 const frenchTranslations = [
@@ -434,7 +434,7 @@ suite('Policy E2E conversion', () => {
 		const result = renderGP(mockProduct, parsedPolicies, []);
 
 		// Load the expected fixture file
-		const fixturePath = path.join(import.meta.dirname, 'fixtures', 'policies', 'win32', 'CodeOSS.admx');
+		const fixturePath = path.join(import.meta.dirname, 'fixtures', 'policies', 'win32', 'Tian.admx');
 		const expectedContent = await fs.readFile(fixturePath, 'utf-8');
 
 		// Compare the rendered ADMX with the fixture
@@ -446,7 +446,7 @@ suite('Policy E2E conversion', () => {
 		const result = renderGP(mockProduct, parsedPolicies, []);
 
 		// Load the expected fixture file
-		const fixturePath = path.join(import.meta.dirname, 'fixtures', 'policies', 'win32', 'en-us', 'CodeOSS.adml');
+		const fixturePath = path.join(import.meta.dirname, 'fixtures', 'policies', 'win32', 'en-us', 'Tian.adml');
 		const expectedContent = await fs.readFile(fixturePath, 'utf-8');
 
 		// Find the en-us ADML
@@ -483,7 +483,7 @@ suite('Policy E2E conversion', () => {
 		const result = renderGP(mockProduct, parsedPolicies, frenchTranslations);
 
 		// Load the expected fixture file
-		const fixturePath = path.join(import.meta.dirname, 'fixtures', 'policies', 'win32', 'fr-fr', 'CodeOSS.adml');
+		const fixturePath = path.join(import.meta.dirname, 'fixtures', 'policies', 'win32', 'fr-fr', 'Tian.adml');
 		const expectedContent = await fs.readFile(fixturePath, 'utf-8');
 
 		// Find the fr-fr ADML
