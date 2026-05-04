@@ -1,16 +1,23 @@
 import Anthropic from '@anthropic-ai/sdk'
-import type { AiMessage, AiProvider, AiProviderConfig } from '../types'
+import { createFetchWithOptionalProxy } from '../http/proxyFetch'
+import type { AiMessage, AiProvider, AiProviderConfig, ResolvedAiConfig } from '../types'
 
 export class AnthropicProvider implements AiProvider {
+  private createClient(config: AiProviderConfig): Anthropic {
+    const resolved = config as ResolvedAiConfig
+    return new Anthropic({
+      apiKey: resolved.apiKey || '',
+      fetch: createFetchWithOptionalProxy(resolved.httpProxy)
+    })
+  }
+
   async chatStream(
     messages: AiMessage[],
     config: AiProviderConfig,
     onChunk: (chunk: string) => void,
     signal?: AbortSignal
   ): Promise<void> {
-    const client = new Anthropic({
-      apiKey: (config as AiProviderConfig & { apiKey?: string }).apiKey || ''
-    })
+    const client = this.createClient(config)
 
     const systemMsg = messages.find((m) => m.role === 'system')
     const chatMessages = messages.filter((m) => m.role !== 'system')
@@ -43,9 +50,7 @@ export class AnthropicProvider implements AiProvider {
     config: AiProviderConfig,
     signal?: AbortSignal
   ): Promise<string> {
-    const client = new Anthropic({
-      apiKey: (config as AiProviderConfig & { apiKey?: string }).apiKey || ''
-    })
+    const client = this.createClient(config)
 
     const response = await client.messages.create(
       {
@@ -67,9 +72,7 @@ export class AnthropicProvider implements AiProvider {
 
   async testConnection(config: AiProviderConfig): Promise<boolean> {
     try {
-      const client = new Anthropic({
-        apiKey: (config as AiProviderConfig & { apiKey?: string }).apiKey || ''
-      })
+      const client = this.createClient(config)
       await client.models.list()
       return true
     } catch {

@@ -1,5 +1,7 @@
 FROM mcr.microsoft.com/devcontainers/typescript-node:22-bookworm
 
+RUN npm install -g npm@11.1.0
+
 ADD install-vscode.sh /root/
 RUN /root/install-vscode.sh
 

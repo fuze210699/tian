@@ -5,12 +5,33 @@
   "version": "0.1.0",
   "publisher": "vscode",
   "engines": {
-    "vscode": "^1.85.0"
+    "vscode": "^1.119.0"
   },
+  "enabledApiProposals": [
+    "defaultChatParticipant"
+  ],
   "categories": ["Machine Learning", "Programming Languages"],
-  "activationEvents": ["onStartupFinished"],
+  "activationEvents": [
+    "onStartupFinished",
+    "onLanguageModelChat:tian"
+  ],
   "main": "./dist/extension.js",
   "contributes": {
+    "languageModelChatProviders": [
+      {
+        "vendor": "tian",
+        "displayName": "Tian AI"
+      }
+    ],
+    "chatParticipants": [
+      {
+        "id": "tian-ai.workspace",
+        "name": "tian",
+        "description": "Built-in Tian AI (API key)",
+        "isDefault": true,
+        "modes": ["ask", "agent", "edit"]
+      }
+    ],
     "viewsContainers": {
       "activitybar": [
         {
@@ -45,6 +66,11 @@
         "tian-ai.baseUrl": {
           "type": "string",
           "default": ""
+        },
+        "tian-ai.httpProxy": {
+          "type": "string",
+          "default": "",
+          "description": "HTTP(S) proxy for AI API calls (e.g. http://127.0.0.1:7890). Uses undici ProxyAgent. OpenRouter free models and other OpenAI-compatible APIs work through the same path."
         },
         "tian-ai.temperature": {
           "type": "number",

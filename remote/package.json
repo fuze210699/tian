@@ -47,6 +47,9 @@
     "yauzl": "^3.0.0",
     "yazl": "^2.4.3"
   },
+  "devDependencies": {
+    "node-gyp": "^12.3.0"
+  },
   "overrides": {
     "node-gyp-build": "4.8.1",
     "kerberos@2.1.1": {

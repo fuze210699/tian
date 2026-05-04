@@ -2,6 +2,7 @@ import { promises as fs } from 'fs'
 import { spawnSync } from 'child_process'
 import { isAbsolute, relative, resolve } from 'path'
 import type { SecretStorage } from 'vscode'
+import * as vscode from 'vscode'
 import {
   AiToolRunner,
   type AiProviderConfig,
@@ -20,11 +21,16 @@ async function resolveAiConfig(
   secrets: SecretStorage,
   config: AiProviderConfig
 ): Promise<ResolvedAiConfig> {
+  let base: ResolvedAiConfig
   if ('apiKey' in config && typeof (config as { apiKey?: string }).apiKey === 'string') {
-    return config as ResolvedAiConfig
+    base = { ...config } as ResolvedAiConfig
+  } else {
+    const apiKey = (await secrets.get(`${SECRET_PREFIX}.${config.provider}`)) || ''
+    base = { ...config, apiKey }
   }
-  const apiKey = (await secrets.get(`${SECRET_PREFIX}.${config.provider}`)) || ''
-  return { ...config, apiKey }
+  const fromSettings = vscode.workspace.getConfiguration('tian-ai').get<string>('httpProxy')?.trim()
+  const httpProxy = config.httpProxy?.trim() || fromSettings
+  return httpProxy ? { ...base, httpProxy } : base
 }
 
 function getGitDiffText(cwd: string | null): string {

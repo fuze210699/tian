@@ -406,7 +406,7 @@ export class CopilotApiService implements ICopilotApiService {
 		// (e.g. as an extra parameter on `messages`/`models`, or as a separate
 		// `create(enterpriseHost?)` factory) and deriving the URL the same way
 		// `defaultAccount.ts` does for the main workbench auth path.
-		const tokenUrl = this._productService.defaultChatAgent.tokenEntitlementUrl;
+		const tokenUrl = this._productService.defaultChatAgent?.tokenEntitlementUrl ?? '';
 
 		return { capiClient, tokenUrl };
 	}

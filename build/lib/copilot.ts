@@ -80,6 +80,9 @@ export function getCopilotExcludeFilter(platform: string, arch: string): string[
  * this artifact is present.
  */
 export function prepareBuiltInCopilotRipgrepShim(platform: string, arch: string, builtInCopilotExtensionDir: string, appNodeModulesDir: string): void {
+	if (!fs.existsSync(builtInCopilotExtensionDir)) {
+		return;
+	}
 	const { nodePlatform, nodeArch } = toNodePlatformArch(platform, arch);
 	const platformArch = `${nodePlatform}-${nodeArch}`;
 
@@ -87,7 +90,7 @@ export function prepareBuiltInCopilotRipgrepShim(platform: string, arch: string,
 	const copilotBase = path.join(extensionNodeModules, '@github', 'copilot');
 	const copilotSdkBase = path.join(copilotBase, 'sdk');
 	if (!fs.existsSync(copilotSdkBase)) {
-		throw new Error(`[prepareBuiltInCopilotRipgrepShim] Copilot SDK directory not found at ${copilotSdkBase}`);
+		return;
 	}
 
 	const ripgrepSource = path.join(appNodeModulesDir, '@vscode', 'ripgrep', 'bin');

@@ -644,6 +644,9 @@ export class ChatSetupContribution extends Disposable implements IWorkbenchContr
 			await this.extensionService.whenInstalledExtensionsRegistered();
 			if (this.extensionService.extensions.find(ext => ExtensionIdentifier.equals(ext.identifier, defaultChat.chatExtensionId))) {
 				context.update({ installed: true, disabled: false, untrusted: false, disabledInWorkspace: false });
+				if (ExtensionIdentifier.equals(defaultChat.chatExtensionId, 'vscode.tian-ai')) {
+					void context.update({ completed: true });
+				}
 				return;
 			}
 		}
@@ -679,6 +682,9 @@ export class ChatSetupContribution extends Disposable implements IWorkbenchContr
 			}
 
 			context.update({ installed, disabled, untrusted, disabledInWorkspace });
+			if (installed && !disabled && !untrusted && ExtensionIdentifier.equals(defaultChat.chatExtensionId, 'vscode.tian-ai')) {
+				void context.update({ completed: true });
+			}
 		}));
 	}
 }

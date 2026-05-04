@@ -7,6 +7,8 @@ export interface AiProviderConfig {
   provider: string
   model: string
   baseUrl?: string
+  /** HTTP(S) proxy URL for outbound API calls (e.g. http://127.0.0.1:7890). */
+  httpProxy?: string
   temperature?: number
   maxTokens?: number
 }

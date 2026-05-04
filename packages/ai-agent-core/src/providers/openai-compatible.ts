@@ -1,5 +1,6 @@
 import OpenAI from 'openai'
-import type { AiMessage, AiProvider, AiProviderConfig } from '../types'
+import { createFetchWithOptionalProxy } from '../http/proxyFetch'
+import type { AiMessage, AiProvider, AiProviderConfig, ResolvedAiConfig } from '../types'
 
 export class OpenAiCompatibleProvider implements AiProvider {
   private getDefaultBaseUrl(provider: string): string {
@@ -13,20 +14,26 @@ export class OpenAiCompatibleProvider implements AiProvider {
     }
   }
 
+  private createClient(config: AiProviderConfig): OpenAI {
+    const resolved = config as ResolvedAiConfig
+    return new OpenAI({
+      apiKey: resolved.apiKey || '',
+      baseURL: config.baseUrl || this.getDefaultBaseUrl(config.provider),
+      fetch: createFetchWithOptionalProxy(resolved.httpProxy),
+      defaultHeaders:
+        config.provider === 'openrouter'
+          ? { 'HTTP-Referer': 'https://tian-ide.app', 'X-Title': 'Tian IDE' }
+          : undefined
+    })
+  }
+
   async chatStream(
     messages: AiMessage[],
     config: AiProviderConfig,
     onChunk: (chunk: string) => void,
     signal?: AbortSignal
   ): Promise<void> {
-    const client = new OpenAI({
-      apiKey: (config as AiProviderConfig & { apiKey?: string }).apiKey || '',
-      baseURL: config.baseUrl || this.getDefaultBaseUrl(config.provider),
-      defaultHeaders:
-        config.provider === 'openrouter'
-          ? { 'HTTP-Referer': 'https://tian-ide.app', 'X-Title': 'Tian IDE' }
-          : undefined
-    })
+    const client = this.createClient(config)
 
     const stream = await client.chat.completions.create(
       {
@@ -51,10 +58,7 @@ export class OpenAiCompatibleProvider implements AiProvider {
     config: AiProviderConfig,
     signal?: AbortSignal
   ): Promise<string> {
-    const client = new OpenAI({
-      apiKey: (config as AiProviderConfig & { apiKey?: string }).apiKey || '',
-      baseURL: config.baseUrl || this.getDefaultBaseUrl(config.provider)
-    })
+    const client = this.createClient(config)
 
     const prompt = `<|fim_prefix|>${prefix}<|fim_suffix|>${suffix}<|fim_middle|>`
     const response = await client.completions.create(
@@ -72,10 +76,7 @@ export class OpenAiCompatibleProvider implements AiProvider {
 
   async testConnection(config: AiProviderConfig): Promise<boolean> {
     try {
-      const client = new OpenAI({
-        apiKey: (config as AiProviderConfig & { apiKey?: string }).apiKey || '',
-        baseURL: config.baseUrl || this.getDefaultBaseUrl(config.provider)
-      })
+      const client = this.createClient(config)
       await client.models.list()
       return true
     } catch {

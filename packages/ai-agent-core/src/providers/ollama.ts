@@ -1,8 +1,13 @@
-import type { AiMessage, AiProvider, AiProviderConfig } from '../types'
+import { createFetchWithOptionalProxy } from '../http/proxyFetch'
+import type { AiMessage, AiProvider, AiProviderConfig, ResolvedAiConfig } from '../types'
 
 export class OllamaProvider implements AiProvider {
   private getBaseUrl(config: AiProviderConfig): string {
     return config.baseUrl || 'http://localhost:11434'
+  }
+
+  private getFetch(config: AiProviderConfig) {
+    return createFetchWithOptionalProxy((config as ResolvedAiConfig).httpProxy)
   }
 
   async chatStream(
@@ -11,8 +16,9 @@ export class OllamaProvider implements AiProvider {
     onChunk: (chunk: string) => void,
     signal?: AbortSignal
   ): Promise<void> {
+    const fetchImpl = this.getFetch(config)
     const baseUrl = this.getBaseUrl(config)
-    const response = await fetch(`${baseUrl}/api/chat`, {
+    const response = await fetchImpl(`${baseUrl}/api/chat`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
@@ -40,7 +46,7 @@ export class OllamaProvider implements AiProvider {
       for (const line of text.split('\n')) {
         if (!line.trim()) continue
         try {
-          const json = JSON.parse(line)
+          const json = JSON.parse(line) as { message?: { content?: string } }
           if (json.message?.content) onChunk(json.message.content)
         } catch {
           // skip malformed line
@@ -55,8 +61,9 @@ export class OllamaProvider implements AiProvider {
     config: AiProviderConfig,
     signal?: AbortSignal
   ): Promise<string> {
+    const fetchImpl = this.getFetch(config)
     const baseUrl = this.getBaseUrl(config)
-    const response = await fetch(`${baseUrl}/api/generate`, {
+    const response = await fetchImpl(`${baseUrl}/api/generate`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
@@ -76,8 +83,9 @@ export class OllamaProvider implements AiProvider {
 
   async testConnection(config: AiProviderConfig): Promise<boolean> {
     try {
+      const fetchImpl = this.getFetch(config)
       const baseUrl = this.getBaseUrl(config)
-      const response = await fetch(`${baseUrl}/api/tags`)
+      const response = await fetchImpl(`${baseUrl}/api/tags`)
       return response.ok
     } catch {
       return false
