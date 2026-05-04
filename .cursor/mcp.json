@@ -1,8 +1,0 @@
-{
-  "mcpServers": {
-    "milens": {
-      "command": "npx",
-      "args": ["-y", "milens", "serve", "-p", "."]
-    }
-  }
-}

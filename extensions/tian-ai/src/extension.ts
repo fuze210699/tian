@@ -3,91 +3,91 @@
  *  Licensed under the MIT License. See License.txt in the project root for license information.
  *--------------------------------------------------------------------------------------------*/
 
-import { randomBytes } from 'crypto'
-import * as path from 'path'
-import * as vscode from 'vscode'
+import { randomBytes } from 'crypto';
+import * as path from 'path';
+import * as vscode from 'vscode';
 import {
 	runChatRequest,
 	type AiChatEvent,
 	type AiProviderConfig,
 	type AiMessage,
 	type AiToolRunner
-} from '../../../packages/ai-agent-core/src/index'
-import { registerWorkbenchNativeChat } from './nativeChat'
-import { createVsCodeAiToolRunner } from './vscodeToolRunner'
-import { getTianAiProviderConfigFromWorkspace } from './workspaceAiConfig'
+} from '../../../packages/ai-agent-core/src/index';
+import { registerWorkbenchNativeChat } from './nativeChat';
+import { createVsCodeAiToolRunner } from './vscodeToolRunner';
+import { getTianAiProviderConfigFromWorkspace } from './workspaceAiConfig';
 
-const MAX_ATTACHMENT_CHARS = 48_000
+const MAX_ATTACHMENT_CHARS = 48_000;
 
 type WebviewOutbound =
 	| { type: 'log-clear' }
 	| { type: 'log-line'; text: string }
 	| { type: 'delta'; text: string }
 	| { type: 'busy'; value: boolean }
-	| { type: 'prefill'; text: string }
+	| { type: 'prefill'; text: string };
 
 export function activate(context: vscode.ExtensionContext): void {
-	const output = vscode.window.createOutputChannel('Tian AI (output)')
-	context.subscriptions.push(output)
+	const output = vscode.window.createOutputChannel('Tian AI (output)');
+	context.subscriptions.push(output);
 
-	const toolRunner = createVsCodeAiToolRunner(context.secrets)
-	registerWorkbenchNativeChat(context, toolRunner)
-	const sidebar = new TianAiChatSidebarProvider(context.extensionUri, toolRunner)
+	const toolRunner = createVsCodeAiToolRunner(context.secrets);
+	registerWorkbenchNativeChat(context, toolRunner);
+	const sidebar = new TianAiChatSidebarProvider(context.extensionUri, toolRunner);
 	context.subscriptions.push(
 		vscode.window.registerWebviewViewProvider('tian-ai.chat', sidebar, {
 			webviewOptions: { retainContextWhenHidden: true }
 		})
-	)
+	);
 
 	context.subscriptions.push(
 		vscode.commands.registerCommand('tian-ai.openChat', async () => {
-			await vscode.commands.executeCommand('tian-ai.chat.focus')
+			await vscode.commands.executeCommand('tian-ai.chat.focus');
 		})
-	)
+	);
 
 	context.subscriptions.push(
 		vscode.commands.registerCommand('tian-ai.setApiKey', async () => {
 			const providerId = await vscode.window.showInputBox({
 				title: 'Provider (e.g. openai, anthropic, gemini)',
 				value: 'openai'
-			})
-			if (!providerId) return
+			});
+			if (!providerId) { return; }
 			const key = await vscode.window.showInputBox({
 				title: 'API key',
 				password: true,
 				prompt: `Stored: tian-ai.api-key.${providerId}`
-			})
-			if (!key) return
-			await context.secrets.store(`tian-ai.api-key.${providerId}`, key)
-			vscode.window.showInformationMessage(`Tian AI: API key saved for ${providerId}.`)
+			});
+			if (!key) { return; }
+			await context.secrets.store(`tian-ai.api-key.${providerId}`, key);
+			vscode.window.showInformationMessage(`Tian AI: API key saved for ${providerId}.`);
 		})
-	)
+	);
 
 	context.subscriptions.push(
 		vscode.commands.registerCommand('tian-ai.chatToOutput', () =>
 			runChatToOutputChannel(output, toolRunner)
 		)
-	)
+	);
 
 	context.subscriptions.push(
 		vscode.commands.registerCommand('tian-ai.explainSelection', async () =>
 			sidebar.explainSelection()
 		)
-	)
+	);
 
 	context.subscriptions.push(
 		vscode.commands.registerCommand('tian-ai.clearChatSidebar', async () => {
-			await vscode.commands.executeCommand('tian-ai.chat.focus')
-			sidebar.requestSidebarReset()
+			await vscode.commands.executeCommand('tian-ai.chat.focus');
+			sidebar.requestSidebarReset();
 		})
-	)
+	);
 }
 
 export function deactivate(): void { }
 
 class TianAiChatSidebarProvider implements vscode.WebviewViewProvider {
-	private view: vscode.WebviewView | null = null
-	private readonly queuedPrefills: string[] = []
+	private view: vscode.WebviewView | null = null;
+	private readonly queuedPrefills: string[] = [];
 
 	constructor(
 		private readonly extensionUri: vscode.Uri,
@@ -95,85 +95,85 @@ class TianAiChatSidebarProvider implements vscode.WebviewViewProvider {
 	) { }
 
 	resolveWebviewView(webviewView: vscode.WebviewView): void {
-		this.view = webviewView
-		const nonce = randomBytes(16).toString('hex')
+		this.view = webviewView;
+		const nonce = randomBytes(16).toString('hex');
 		webviewView.webview.options = {
 			enableScripts: true,
 			localResourceRoots: [vscode.Uri.joinPath(this.extensionUri, 'media')]
-		}
-		webviewView.webview.html = getSidebarHtml(webviewView.webview.cspSource, nonce)
+		};
+		webviewView.webview.html = getSidebarHtml(webviewView.webview.cspSource, nonce);
 		webviewView.onDidDispose(() => {
-			this.view = null
-		})
+			this.view = null;
+		});
 		webviewView.webview.onDidReceiveMessage((msg: { type?: string; text?: string }) => {
 			if (msg?.type === 'send' && typeof msg.text === 'string') {
-				void this.runSidebarChat(msg.text.trim())
+				void this.runSidebarChat(msg.text.trim());
 			}
-		})
-		this.flushQueuedPrefills()
+		});
+		this.flushQueuedPrefills();
 	}
 
 	requestSidebarReset(): void {
-		this.post({ type: 'log-clear' })
-		this.post({ type: 'prefill', text: '' })
+		this.post({ type: 'log-clear' });
+		this.post({ type: 'prefill', text: '' });
 	}
 
 	async explainSelection(): Promise<void> {
-		const editor = vscode.window.activeTextEditor
+		const editor = vscode.window.activeTextEditor;
 		if (!editor) {
-			vscode.window.showWarningMessage('Tian AI: no active editor.')
-			return
+			vscode.window.showWarningMessage('Tian AI: no active editor.');
+			return;
 		}
-		const block = buildEditorBlock(editor, { selectionOnly: true })
+		const block = buildEditorBlock(editor, { selectionOnly: true });
 		const body = block
 			? `${block}\n\nExplain the above in context of this file. Be concise.`
-			: 'Explain the current file (no text captured).'
-		this.enqueuePrefill(body)
-		await vscode.commands.executeCommand('tian-ai.chat.focus')
+			: 'Explain the current file (no text captured).';
+		this.enqueuePrefill(body);
+		await vscode.commands.executeCommand('tian-ai.chat.focus');
 	}
 
 	private enqueuePrefill(text: string): void {
-		this.queuedPrefills.push(text)
-		this.flushQueuedPrefills()
+		this.queuedPrefills.push(text);
+		this.flushQueuedPrefills();
 	}
 
 	private flushQueuedPrefills(): void {
-		const w = this.view?.webview
-		if (!w) return
+		const w = this.view?.webview;
+		if (!w) { return; }
 		while (this.queuedPrefills.length > 0) {
-			const t = this.queuedPrefills.shift()
-			if (t === undefined) break
-			void w.postMessage({ type: 'prefill', text: t })
+			const t = this.queuedPrefills.shift();
+			if (t === undefined) { break; }
+			void w.postMessage({ type: 'prefill', text: t });
 		}
 	}
 
 	private post(m: WebviewOutbound): void {
-		this.view?.webview.postMessage(m)
+		this.view?.webview.postMessage(m);
 	}
 
 	private async runSidebarChat(trimmed: string): Promise<void> {
-		if (!trimmed) return
-		const v = this.view
-		if (!v) return
-		const folders = vscode.workspace.workspaceFolders
-		const root = folders?.[0]?.uri.fsPath ?? null
+		if (!trimmed) { return; }
+		const v = this.view;
+		if (!v) { return; }
+		const folders = vscode.workspace.workspaceFolders;
+		const root = folders?.[0]?.uri.fsPath ?? null;
 		if (!root) {
-			vscode.window.showWarningMessage('Open a folder workspace first.')
-			return
+			vscode.window.showWarningMessage('Open a folder workspace first.');
+			return;
 		}
 
-		const cfg = vscode.workspace.getConfiguration('tian-ai')
-		const includeEditor = cfg.get<boolean>('includeActiveEditor', true)
-		const aiConfig: AiProviderConfig = getTianAiProviderConfigFromWorkspace()
+		const cfg = vscode.workspace.getConfiguration('tian-ai');
+		const includeEditor = cfg.get<boolean>('includeActiveEditor', true);
+		const aiConfig: AiProviderConfig = getTianAiProviderConfigFromWorkspace();
 
-		const requestId = `tian-ai-${Date.now()}`
-		const messageId = requestId
+		const requestId = `tian-ai-${Date.now()}`;
+		const messageId = requestId;
 
-		const editor = vscode.window.activeTextEditor
+		const editor = vscode.window.activeTextEditor;
 		const editorBlock =
 			includeEditor && editor && editor.document.uri.scheme === 'file'
 				? buildEditorBlock(editor, { selectionOnly: false })
-				: ''
+				: '';
 
 		const userContent = [
 			workspaceRootsPreamble(folders),
@@ -181,33 +181,33 @@ class TianAiChatSidebarProvider implements vscode.WebviewViewProvider {
 			trimmed
 		]
 			.filter(Boolean)
-			.join('\n\n')
+			.join('\n\n');
 
-		this.post({ type: 'busy', value: true })
-		this.post({ type: 'log-clear' })
-		this.post({ type: 'log-line', text: `[workspace] ${root}` })
+		this.post({ type: 'busy', value: true });
+		this.post({ type: 'log-clear' });
+		this.post({ type: 'log-line', text: `[workspace] ${root}` });
 		if (folders && folders.length > 1) {
 			this.post({
 				type: 'log-line',
 				text: `[roots] ${folders.map((f) => f.uri.fsPath).join('; ')}`
-			})
+			});
 		}
-		this.post({ type: 'log-line', text: `[provider] ${aiConfig.provider} / ${aiConfig.model}` })
+		this.post({ type: 'log-line', text: `[provider] ${aiConfig.provider} / ${aiConfig.model}` });
 		if (editorBlock) {
-			this.post({ type: 'log-line', text: '[context] active editor attached' })
+			this.post({ type: 'log-line', text: '[context] active editor attached' });
 		}
-		this.post({ type: 'log-line', text: '---' })
+		this.post({ type: 'log-line', text: '---' });
 
-		const messages: AiMessage[] = [{ role: 'user', content: userContent }]
+		const messages: AiMessage[] = [{ role: 'user', content: userContent }];
 
 		const sendEvent = (event: AiChatEvent): void => {
 			if (event.type === 'response-delta') {
-				this.post({ type: 'delta', text: event.delta })
-				return
+				this.post({ type: 'delta', text: event.delta });
+				return;
 			}
 			if (event.type === 'tool-call-started') {
-				this.post({ type: 'log-line', text: `[tool -> ${event.toolName}] ${event.summary ?? ''}` })
-				return
+				this.post({ type: 'log-line', text: `[tool -> ${event.toolName}] ${event.summary ?? ''}` });
+				return;
 			}
 			if (event.type === 'tool-call-completed') {
 				this.post({
@@ -215,17 +215,17 @@ class TianAiChatSidebarProvider implements vscode.WebviewViewProvider {
 					text:
 						`[tool ok ${event.toolName}] ok=${event.success}` +
 						(event.details ? ` ${event.details.slice(0, 400)}...` : '')
-				})
-				return
+				});
+				return;
 			}
 			if (event.type === 'status-update') {
-				this.post({ type: 'log-line', text: `[status] ${event.label}` })
-				return
+				this.post({ type: 'log-line', text: `[status] ${event.label}` });
+				return;
 			}
 			if (event.type === 'response-error') {
-				this.post({ type: 'log-line', text: `[error] ${event.error}` })
+				this.post({ type: 'log-line', text: `[error] ${event.error}` });
 			}
-		}
+		};
 
 		try {
 			await runChatRequest({
@@ -236,43 +236,43 @@ class TianAiChatSidebarProvider implements vscode.WebviewViewProvider {
 				executionContext: { currentFolder: root },
 				sendEvent,
 				toolRunner: this.toolRunner
-			})
+			});
 		} catch (e) {
-			this.post({ type: 'log-line', text: String(e instanceof Error ? e.message : e) })
+			this.post({ type: 'log-line', text: String(e instanceof Error ? e.message : e) });
 		} finally {
-			this.post({ type: 'busy', value: false })
+			this.post({ type: 'busy', value: false });
 		}
 	}
 }
 
 function workspaceRootsPreamble(folders: readonly vscode.WorkspaceFolder[] | undefined): string {
-	if (!folders?.length) return ''
-	if (folders.length === 1) return ''
-	const lines = folders.map((f) => `- ${f.uri.fsPath}`)
-	return `This workspace has ${folders.length} roots:\n${lines.join('\n')}`
+	if (!folders?.length) { return ''; }
+	if (folders.length === 1) { return ''; }
+	const lines = folders.map((f) => `- ${f.uri.fsPath}`);
+	return `This workspace has ${folders.length} roots:\n${lines.join('\n')}`;
 }
 
 function buildEditorBlock(
 	editor: vscode.TextEditor,
 	opts: { selectionOnly: boolean }
 ): string {
-	const doc = editor.document
-	if (doc.uri.scheme !== 'file') return ''
-	let body: string
+	const doc = editor.document;
+	if (doc.uri.scheme !== 'file') { return ''; }
+	let body: string;
 	if (opts.selectionOnly && !editor.selection.isEmpty) {
-		body = doc.getText(editor.selection)
+		body = doc.getText(editor.selection);
 	} else if (opts.selectionOnly && editor.selection.isEmpty) {
-		body = doc.getText()
+		body = doc.getText();
 	} else {
-		body = doc.getText()
+		body = doc.getText();
 	}
 	if (body.length > MAX_ATTACHMENT_CHARS) {
-		body = `${body.slice(0, MAX_ATTACHMENT_CHARS)}\n...[truncated]...`
+		body = `${body.slice(0, MAX_ATTACHMENT_CHARS)}\n...[truncated]...`;
 	}
-	const rel = vscode.workspace.asRelativePath(doc.uri, false)
-	const abs = doc.uri.fsPath
-	const label = rel && !rel.startsWith('..') && !path.isAbsolute(rel) ? rel : abs
-	return `[Active editor]\npath: ${label}\nlanguage: ${doc.languageId}\n\n${body}`
+	const rel = vscode.workspace.asRelativePath(doc.uri, false);
+	const abs = doc.uri.fsPath;
+	const label = rel && !rel.startsWith('..') && !path.isAbsolute(rel) ? rel : abs;
+	return `[Active editor]\npath: ${label}\nlanguage: ${doc.languageId}\n\n${body}`;
 }
 
 function getSidebarHtml(cspSource: string, nonce: string): string {
@@ -350,79 +350,79 @@ font-family:var(--vscode-editor-font-family,monospace);font-size:12px;overflow:a
 })();
 </script>
 </body>
-</html>`
+</html>`;
 }
 
 async function runChatToOutputChannel(
 	output: vscode.OutputChannel,
 	toolRunner: AiToolRunner
 ): Promise<void> {
-	const folders = vscode.workspace.workspaceFolders
-	const root = folders?.[0]?.uri.fsPath ?? null
+	const folders = vscode.workspace.workspaceFolders;
+	const root = folders?.[0]?.uri.fsPath ?? null;
 	if (!root) {
-		vscode.window.showWarningMessage('Open a folder workspace first.')
-		return
+		vscode.window.showWarningMessage('Open a folder workspace first.');
+		return;
 	}
 
 	const text = await vscode.window.showInputBox({
 		title: 'Tian AI (output)',
 		prompt: 'Agent loop - streamed to Output channel'
-	})
-	if (!text?.trim()) return
+	});
+	if (!text?.trim()) { return; }
 
-	const cfg = vscode.workspace.getConfiguration('tian-ai')
-	const includeEditor = cfg.get<boolean>('includeActiveEditor', true)
-	const aiConfig: AiProviderConfig = getTianAiProviderConfigFromWorkspace()
+	const cfg = vscode.workspace.getConfiguration('tian-ai');
+	const includeEditor = cfg.get<boolean>('includeActiveEditor', true);
+	const aiConfig: AiProviderConfig = getTianAiProviderConfigFromWorkspace();
 
-	const requestId = `tian-ai-out-${Date.now()}`
-	const messageId = requestId
+	const requestId = `tian-ai-out-${Date.now()}`;
+	const messageId = requestId;
 
-	const editor = vscode.window.activeTextEditor
+	const editor = vscode.window.activeTextEditor;
 	const editorBlock =
 		includeEditor && editor && editor.document.uri.scheme === 'file'
 			? buildEditorBlock(editor, { selectionOnly: false })
-			: ''
+			: '';
 
 	const userContent = [workspaceRootsPreamble(folders), editorBlock, text.trim()]
 		.filter(Boolean)
-		.join('\n\n')
+		.join('\n\n');
 
-	output.clear()
-	output.show(true)
-	output.appendLine(`[workspace] ${root}`)
+	output.clear();
+	output.show(true);
+	output.appendLine(`[workspace] ${root}`);
 	if (folders && folders.length > 1) {
-		output.appendLine(`[roots] ${folders.map((f) => f.uri.fsPath).join('; ')}`)
+		output.appendLine(`[roots] ${folders.map((f) => f.uri.fsPath).join('; ')}`);
 	}
-	output.appendLine(`[provider] ${aiConfig.provider} / ${aiConfig.model}`)
-	if (editorBlock) output.appendLine('[context] active editor attached')
-	output.appendLine('---')
+	output.appendLine(`[provider] ${aiConfig.provider} / ${aiConfig.model}`);
+	if (editorBlock) { output.appendLine('[context] active editor attached'); }
+	output.appendLine('---');
 
-	const messages: AiMessage[] = [{ role: 'user', content: userContent }]
+	const messages: AiMessage[] = [{ role: 'user', content: userContent }];
 
 	const sendEvent = (event: AiChatEvent): void => {
 		if (event.type === 'response-delta') {
-			output.append(event.delta)
-			return
+			output.append(event.delta);
+			return;
 		}
 		if (event.type === 'tool-call-started') {
-			output.appendLine(`[tool -> ${event.toolName}] ${event.summary ?? ''}`)
-			return
+			output.appendLine(`[tool -> ${event.toolName}] ${event.summary ?? ''}`);
+			return;
 		}
 		if (event.type === 'tool-call-completed') {
 			output.appendLine(
 				`[tool ok ${event.toolName}] ok=${event.success}` +
 				(event.details ? `\n${event.details.slice(0, 500)}...` : '')
-			)
-			return
+			);
+			return;
 		}
 		if (event.type === 'status-update') {
-			output.appendLine(`[status] ${event.label}`)
-			return
+			output.appendLine(`[status] ${event.label}`);
+			return;
 		}
 		if (event.type === 'response-error') {
-			output.appendLine(`[error] ${event.error}`)
+			output.appendLine(`[error] ${event.error}`);
 		}
-	}
+	};
 
 	try {
 		await runChatRequest({
@@ -433,9 +433,9 @@ async function runChatToOutputChannel(
 			executionContext: { currentFolder: root },
 			sendEvent,
 			toolRunner
-		})
-		output.appendLine('\n--- done ---')
+		});
+		output.appendLine('\n--- done ---');
 	} catch (e) {
-		output.appendLine(String(e instanceof Error ? e.message : e))
+		output.appendLine(String(e instanceof Error ? e.message : e));
 	}
 }

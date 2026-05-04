@@ -302,7 +302,17 @@ if (import.meta.main) {
 					process.exit(1);
 				}
 
-				const some = out.split(/\r?\n/).filter((l) => !!l);
+				let stagedDeleted = new Set<string>();
+				try {
+					stagedDeleted = new Set(
+						cp.execSync('git diff --cached --name-only --diff-filter=D', { maxBuffer: 2000 * 1024, encoding: 'utf8' })
+							.split(/\r?\n/)
+							.filter((l) => !!l)
+					);
+				} catch {
+					stagedDeleted = new Set();
+				}
+				const some = out.split(/\r?\n/).filter((l) => !!l && !stagedDeleted.has(l));
 
 				if (some.length > 0) {
 					// Check copilot engines.vscode version if relevant files are staged
